@@ -1,12 +1,17 @@
-CSSGameObjects = document.querySelectorAll('.gameobject');
+HTMLGameBoard = document.getElementById('board');
+HTMLPlayerTallyName = document.getElementById('player-name');
+HTMLPlayerTallyScore = document.getElementById('player-score');
+HTMLComputerTallyScore = document.getElementById('computer-score');
+HTMLResetButton = document.getElementById('reset');
 
-const player = (name, marker, color, score, CPU=false) => {
+const player = (name, marker, color, scoreHTML, CPU=false) => {
 
 let data = {
     name,
     marker, //'x' or 'o'
     color,
-    score,
+    score: 0,
+    scoreHTML,
     CPU,
   };
 
@@ -18,14 +23,14 @@ let data = {
   const CPURound = () => {
     let validSquares = [];
     if (data.CPU) {
-      for (let square of game.squares) {
+      for (let square of game.getSquares()) {
         if (!square.getMark()) {
           validSquares.push(square.getId());
           console.log(validSquares)
       }};
       choice = validSquares[Math.floor(Math.random() * validSquares.length)]
       console.log(choice);
-      for (let square of game.squares) {
+      for (let square of game.getSquares()) {
         if (square.getId() == choice) {
           setTimeout(function () {markSquare(square)}, 1000);
           return;
@@ -39,7 +44,9 @@ let data = {
 
   const getMarker = () =>  data.marker;
 
-  return {markSquare, CPURound, getName, getColor, getMarker};
+  const addPoint = () => data.scoreHTML.textContent = ++data.score;
+
+  return {markSquare, CPURound, getName, getColor, getMarker, addPoint};
 };
 
 const square = (selector) => {
@@ -71,11 +78,7 @@ const square = (selector) => {
 
   const getPosition = () => [xPos, yPos];
 
-  const setBG = (color) => {
-    html.style.backgroundColor = color;
-  }
-
-  return {html, mark, getMark, getId, getPosition, setBG};
+  return {html, mark, getMark, getId, getPosition};
 };
 
 const game = (() => {
@@ -83,8 +86,45 @@ const game = (() => {
   let players = [];
   let turn = 0;
 
-  const getTurn = () => turn;
+  const getSquares = () => squares;
+  const addSquare = (arg) => squares.push(arg);
+  const paintSquare = (id, color) => squares[id].html.style.backgroundColor = color;
 
+  const setSquareHover = (id) => {
+    squares[id].html.addEventListener('mouseover', (e) => {
+      if (!squares[id].html.classList.contains('xmarker') &&
+      !squares[id].html.classList.contains('omarker') &&
+      game.getTurn() == 0) {
+        squares[id].html.classList.add('hover');
+      }});
+  };
+
+  const setSquareMouseOut = (id) => {
+    squares[id].html.addEventListener('mouseout', (e) => {
+      squares[id].html.classList.remove('hover');
+    });
+  };
+
+  const setSquareClick = (id) => {
+    squares[id].html.addEventListener('click', (e) => {
+      if (game.getTurn() == 0 &&
+      squares[id].getMark() == '') {
+          you.markSquare(squares[id]);
+    }});
+  };
+
+  const setSquareListeners = (id) => {
+    setSquareHover(id);
+    setSquareMouseOut(id);
+    setSquareClick(id);
+  }
+
+  const clearSquares = () => {
+    squares = [];
+  };
+
+  const getTurn = () => turn;
+  const setTurn = (num) => turn = parseInt(num);
   const endTurn = () => {
     if (r = checkSquares()) {
       setTimeout(function() {win(players[turn].getName(), r)}, 500);
@@ -109,26 +149,26 @@ const game = (() => {
     switch(data[1]) {
     case 'column':
       for(let i = data[0];i<9;i+=3) {
-        game.squares[i].setBG(color);
+        paintSquare(i, color);
       };
       break;
 
     case 'row':
       let j = data[0]+3;
       for(let i = data[0];i<j;i++) {
-        game.squares[i].setBG(color);
+        paintSquare(i, color);
       };
       break;
     
     case 'back':
       for(let i=0;i<=8;i+=4) {
-        game.squares[i].setBG(color);
+        paintSquare(i, color);
       };
       break;
 
     case 'forward':
       for(let i=2;i<=6;i+=2) {
-        game.squares[i].setBG(color);
+        paintSquare(i, color);
       };
       break;
     };
@@ -139,93 +179,113 @@ const game = (() => {
     endGame();
   }
 
+  const endGame = () => {
+    players[turn].addPoint();
+    turn = null;
+  };
+
   const checkColumns = () => {
     for(let i=0;i<3;i++) {
-      let m = game.squares[i].getMark();
+      let m = squares[i].getMark();
       if (!m) continue;
-      if (game.squares[i+3].getMark() == m && 
-          game.squares[i+6].getMark() == m) return [i, 'column'];
+      if (squares[i+3].getMark() == m && 
+          squares[i+6].getMark() == m) return [i, 'column'];
     };
   };
 
   const checkRows = () => {
     for(let i=0;i<7;i+=3) {
-      let m = game.squares[i].getMark();
+      let m = squares[i].getMark();
       if (!m) continue;
-      if (game.squares[i+1].getMark() == m &&
-          game.squares[i+2].getMark() == m) return [i, 'row'];
+      if (squares[i+1].getMark() == m &&
+          squares[i+2].getMark() == m) return [i, 'row'];
     };
   };
 
   const checkDiagonals = () => {
-      let m = game.squares[0].getMark();
+      let m = squares[0].getMark();
       if (m) {
-        if (game.squares[4].getMark() == m &&
-          game.squares[8].getMark() == m) return [0, 'back'];
+        if (squares[4].getMark() == m &&
+          squares[8].getMark() == m) return [0, 'back'];
       }
 
-      m = game.squares[2].getMark();
+      m = squares[2].getMark();
       if (m) {
-        if (game.squares[4].getMark() == m &&
-            game.squares[6].getMark() == m) return [0, 'forward'];
+        if (squares[4].getMark() == m &&
+            squares[6].getMark() == m) return [0, 'forward'];
       }
   };
   
-
   const checkSquares = () => {
     winCheck = checkColumns();
     if (!winCheck) winCheck = checkRows();
     if (!winCheck) winCheck = checkDiagonals();
     return winCheck;
   };
-
-  const endGame = () => {
-    turn = null;
-  };
-
+ 
   const initPlayers = () => {
-    you = Object.assign({}, player('you', 'x', 'green', 0));
-    computer = Object.assign({}, player('computer', 'o', 'red', 0, true));
+    you = Object.assign({}, 
+        player('you', 'x', 'green', HTMLPlayerTallyScore));
+
+    computer = Object.assign({},
+        player('computer', 'o', 'red', HTMLComputerTallyScore, true));
+
     players.push(you, computer);
-  };
-
-  const initSquares = () => {
-    for (let square of squares) {
-
-      square.html.addEventListener('mouseover', (e) => {
-
-      if (!square.html.classList.contains('xmarker') &&
-      !square.html.classList.contains('omarker') &&
-      game.getTurn() == 0) {
-
-        square.html.classList.add('hover');
-
-      }});
-
-      square.html.addEventListener('mouseout', (e) => {
-        square.html.classList.remove('hover');
-
-      });
-
-      square.html.addEventListener('click', (e) => {
-        if (game.getTurn() == 0 &&
-            square.getMark() == '') {
-         you.markSquare(square);
-      }});
-    }};
-
-    const init = () => {
-      initSquares();
-      initPlayers();
-    };
-    
-
-  return {getTurn, endTurn, squares, init};
+  };  
+  
+  return {squares, getSquares, addSquare, setSquareListeners, getTurn, setTurn,
+     endTurn, initPlayers, clearSquares};
 })();
 
-CSSGameObjects.forEach((obj) => {
-  game.squares.push(square(`[data-id='${obj.dataset.id}']`));
-});
+const board = (() => {
+  let html = HTMLGameBoard;
 
+  const create = (size=9) => {
+    for(let i=1;i<=size;i++) {
+      gameObject = document.createElement('div');
+      gameObject.classList.add('gameobject');
+      gameObject.dataset.id = i;
+      html.appendChild(gameObject);
+    };
+  };
 
-game.init();
+  const initHTML = () => {
+    HTMLGameObjects = document.querySelectorAll('.gameobject');
+    HTMLGameObjects.forEach((obj) => {
+      game.addSquare(square(`[data-id='${obj.dataset.id}']`));
+    });
+
+    for (let i=0;i<game.getSquares().length;i++) {
+      game.setSquareListeners(i);
+    };
+
+    HTMLResetButton.addEventListener('click', (e) => {
+      restart()
+    });
+    };
+
+  const init = () => {
+    create();
+    initHTML();
+  };
+
+  const remove = () => {
+    while(html.hasChildNodes()) {
+      html.removeChild(html.firstChild);
+    };
+    game.clearSquares();
+  };
+
+  const restart = () => {
+    remove();
+    init();
+    game.setTurn(0);
+  };
+
+  const startgame = (() => {
+    restart();
+    game.initPlayers()
+  })();
+
+  return {restart};
+})();
