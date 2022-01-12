@@ -7,6 +7,22 @@
   width: 100vw;
 }
 
+#game {
+  display: flex;
+  gap: 100px;
+  align-items: center;
+}
+
+
+#player-tally,
+#CPU-tally {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 36px;
+  font-weight: bold;
+}
+
 #board {
   border: 6px solid black;
   min-width: 30vw;

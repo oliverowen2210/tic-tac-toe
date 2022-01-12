@@ -10,22 +10,36 @@
 </head>
 <body>
 <div id='wrapper'>
-  <div></div>
   <div id='content'>
     <h1>very nice tic tac toe</h1>
-    <div id='board'>
-      <div class='gameobject' data-id='1'></div>
-      <div class='gameobject' data-id='2'></div>
-      <div class='gameobject' data-id='3'></div>
-      <div class='gameobject' data-id='4'></div>
-      <div class='gameobject' data-id='5'></div>
-      <div class='gameobject' data-id='6'></div>
-      <div class='gameobject' data-id='7'></div>
-      <div class='gameobject' data-id='8'></div>
-      <div class='gameobject' data-id='9'></div>
+    <div id='game'>
+
+      <div id='player-tally'>
+        <p>You</p>
+        <p>0</p>
+      </div>
+
+      <div id='board'>
+        <div class='gameobject' data-id='1'></div>
+        <div class='gameobject' data-id='2'></div>
+        <div class='gameobject' data-id='3'></div>
+        <div class='gameobject' data-id='4'></div>
+        <div class='gameobject' data-id='5'></div>
+        <div class='gameobject' data-id='6'></div>
+        <div class='gameobject' data-id='7'></div>
+        <div class='gameobject' data-id='8'></div>
+        <div class='gameobject' data-id='9'></div>
+      </div>
+
+      <div id='CPU-tally'>
+        <p>CPU</p>
+        <p>0</p>
+      </div>
+      
     </div>
     <button id='reset'>reset</button>
   </div>
+
 </div>
 </body>
 </html>
