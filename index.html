@@ -13,10 +13,10 @@
   <div id='player-settings' class='display'>
       <div class='settings'>
         <p>Player 1</p>
-        <div id='x-marker'>
-          <img src='X.png'>
+        <div>
+          <img class='marker'src='X.png'>
         </div>
-        <input class='player-name' placeholder="name" id='p1name'>
+        <input class='player-name' placeholder="name" id='p1namepick'>
         <div class='player-type'>
           <div class='choice'>
             <input type='radio' name='type1' value='Person' id='p1person' checked>Person
@@ -29,10 +29,10 @@
       <button id='start-button'>Start</button>
       <div class='settings'>
         <p>Player 2</p>
-        <div id='o-marker'>
-          <img src='O.png'>
+        <div>
+          <img class='marker'src='O.png'>
         </div>
-        <input class='player-name' placeholder="name" id='p2name' value='CPU' disabled>
+        <input class='player-name' placeholder="name" id='p2namepick' value='CPU' disabled>
         <div class='player-type'>
           <div class='choice'>
             <input type='radio' name='type2' value='Person' id='p2person'>Person
@@ -49,7 +49,7 @@
     <div id='game'>
 
       <div id='p1tally'>
-        <div id='p1name'>Player 1</div>
+        <div id='p1name'></div>
         <p id='p1score'>0</p>
       </div>
 
@@ -57,7 +57,7 @@
       </div>
 
       <div id='p2tally'>
-        <div id='p2name'>Player 2</div>
+        <div id='p2name'></div>
         <p id='p2score'>0</p>
       </div>
       
