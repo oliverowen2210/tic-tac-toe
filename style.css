@@ -1,8 +1,14 @@
+#wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 #player-settings {
   align-items: center;
   justify-content: space-evenly;
   min-height: 90vh;
-  min-width: 100vw;
+  width: 75%;
 }
 
 #x-marker {
@@ -68,29 +74,35 @@
   width: 100vw;
 }
 
-#game {
+#game-wrapper {
   display: flex;
   gap: 100px;
   align-items: center;
 }
 
+#game {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
 
-#p1tally,
-#p2tally {
+
+.tally {
   display: flex;
   flex-direction: column;
   align-items: center;
   font-size: 36px;
   font-weight: bold;
+  width: 15vw;
 }
 
 #board {
-  border: 6px solid black;
   min-width: 30vw;
   min-height: 30vw;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: repeat(3, 1fr);
+  gap: 0.15vh;
 }
 
 .gameobject {
@@ -118,11 +130,13 @@
   background-image: url('hoverO.png');
 }
 
+
 #reset {
   margin-top: 48px;
-  width: 80px;
-  height: 40px;
-  font-size: 24px;
+  width: 35vw;
+  height: 8vh;
+  font-size: 32px;
+  background-color: darkgray;
 }
 
 .hidden {
@@ -132,3 +146,21 @@
 .display {
   display: flex;
 }
+
+.noL {
+  border-left: none;
+}
+
+.noR {
+  border-right: none;
+}
+
+.noT {
+  border-top: none;
+}
+
+.noB {
+  border-bottom: none;
+}
+
+

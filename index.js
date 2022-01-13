@@ -95,7 +95,10 @@ const game = (() => {
 
   const getSquares = () => squares;
   const addSquare = (arg) => squares.push(arg);
-  const paintSquare = (id, color) => squares[id].html.style.backgroundColor = color;
+  const paintSquare = (id, color) => {
+    squares[id].html.style.backgroundColor = color;
+    squares[id].html.style.boxShadow = `0px 0px 50px ${color}`;
+  };
 
   const setSquareHover = (id) => {
     squares[id].html.addEventListener('mouseover', (e) => {
@@ -191,7 +194,7 @@ const game = (() => {
       HTMLMessage.textContent = 'It\'s a tie!';
     } else {
       paintSquares(data);
-      HTMLMessage.textContent = `Player ${turn+1} wins!`;
+      HTMLMessage.textContent = `${players[turn].getName()} wins!`;
       endGame();
     };
   };
@@ -274,6 +277,36 @@ const board = (() => {
       gameObject = document.createElement('div');
       gameObject.classList.add('gameobject');
       gameObject.dataset.id = i;
+      switch(i) {
+        case 1:
+          gameObject.classList.add('noL');
+          gameObject.classList.add('noT');
+          break;
+        case 2:
+          gameObject.classList.add('noT');
+          break;
+        case 3:
+          gameObject.classList.add('noR');
+          gameObject.classList.add('noT');
+          break;
+        case 4:
+          gameObject.classList.add('noL');
+          break;
+        case 6:
+          gameObject.classList.add('noR');
+          break;
+        case 7:
+          gameObject.classList.add('noL');
+          gameObject.classList.add('noB');
+          break;
+        case 8:
+          gameObject.classList.add('noB');
+          break;
+        case 9:
+          gameObject.classList.add('noB');
+          gameObject.classList.add('noR');
+          break;
+      }
       html.appendChild(gameObject);
     };
   };
@@ -310,6 +343,8 @@ const board = (() => {
   };
 
   const start = (() => {
+    let p1type = '';
+    let p2type = 'CPU';
 
     HTMLResetButton.addEventListener('click', (e) => {
       restart();
@@ -340,17 +375,24 @@ const board = (() => {
     })
 
     HTMLStartButton.addEventListener('click', (e) => {
-      let p1type = '';
       let p1name = HTMLPlayerOneName.value;
-      let p2type = 'CPU';
       let p2name = HTMLPlayerTwoName.value;
   
       HTMLSettings.classList.remove('display');
       HTMLSettings.classList.add('hidden');
+
       HTMLContent.classList.remove('hidden');
       HTMLContent.classList.add('display');
-      HTMLPlayerOneTallyName.textContent = (p1name) ? p1name : 'Player 1';
-      HTMLPlayerTwoTallyName.textContent = (p2name) ? p2name : 'Player 2';
+
+      if (p1name == 'CPU' && p2name == 'CPU') {
+        p1name = 'CPU 1';
+        p2name = 'CPU 2';
+      };
+      
+      if (p1name === '') p1name = 'Player 1';
+      if (p2name === '') p2name = 'Player 2';
+      HTMLPlayerOneTallyName.textContent = p1name;
+      HTMLPlayerTwoTallyName.textContent = p2name;
       game.initPlayers(p1type, p1name, p2type, p2name)
       restart();
     })
