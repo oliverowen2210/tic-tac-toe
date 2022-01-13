@@ -10,21 +10,55 @@
 </head>
 <body>
 <div id='wrapper'>
-  <div id='content'>
-    <h1>very nice tic tac toe</h1>
+  <div id='player-settings' class='display'>
+      <div class='settings'>
+        <p>Player 1</p>
+        <div id='x-marker'>
+          <img src='X.png'>
+        </div>
+        <input class='player-name' placeholder="name" id='p1name'>
+        <div class='player-type'>
+          <div class='choice'>
+            <input type='radio' name='type1' value='Person' id='p1person' checked>Person
+          </div>
+          <div class='choice'>
+            <input type='radio' name='type1' value='CPU' id='p1CPU'>CPU
+          </div>
+        </div>
+      </div>
+      <button id='start-button'>Start</button>
+      <div class='settings'>
+        <p>Player 2</p>
+        <div id='o-marker'>
+          <img src='O.png'>
+        </div>
+        <input class='player-name' placeholder="name" id='p2name' value='CPU' disabled>
+        <div class='player-type'>
+          <div class='choice'>
+            <input type='radio' name='type2' value='Person' id='p2person'>Person
+          </div>
+          <div class='choice'>
+            <input type='radio' name='type2' value='CPU' id='p2CPU' checked>CPU
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id='content' class='hidden'>
+    <h1 id='message'>very nice tic tac toe</h1>
     <div id='game'>
 
-      <div id='player-tally'>
-        <p id='player-name'>You</p>
-        <p id='player-score'>0</p>
+      <div id='p1tally'>
+        <div id='p1name'>Player 1</div>
+        <p id='p1score'>0</p>
       </div>
 
       <div id='board'>
       </div>
 
-      <div id='computer-tally'>
-        <p>CPU</p>
-        <p id='computer-score'>0</p>
+      <div id='p2tally'>
+        <div id='p2name'>Player 2</div>
+        <p id='p2score'>0</p>
       </div>
       
     </div>

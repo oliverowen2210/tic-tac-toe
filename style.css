@@ -1,6 +1,67 @@
+#player-settings {
+  align-items: center;
+  justify-content: space-evenly;
+  min-height: 90vh;
+  min-width: 100vw;
+}
+
+#x-marker {
+  display: flex;
+  justify-content: center;
+  flex: 1;
+  min-height: 10vh;
+  min-width: 5vw;
+}
+
+img {
+  max-height: 50%;
+  max-width: 50%;
+}
+
+.settings {
+  display: flex;
+  flex-direction: column;
+  gap: 1vh;
+  min-height: 100%;
+  width: 25vw;
+  font-size: 36px;
+  text-align: center;
+}
+
+.settings p {
+  margin: 0;
+  padding: 0;
+}
+
+.player-name {
+  width: 15vw;
+  height: 4vh;
+  font-weight: bold;
+  text-align: center;
+  align-self: center;
+  font-size: 18px;
+}
+
+.player-type {
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+}
+
+.choice {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#start-button {
+  width: 10vw;
+  height: 5vh;
+  font-size: 24px;
+}
+
 
 #content {
-  display: flex;
   flex-direction: column;
   align-items: center;
   height: 100vh;
@@ -14,8 +75,8 @@
 }
 
 
-#player-tally,
-#computer-tally {
+#p1tally,
+#p2tally {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -45,12 +106,16 @@
   background-image: url('X.png');
 }
 
-.hover {
+.hoverx {
   background-image: url('hoverX.png');
 }
 
 .omarker {
   background-image: url('O.png');
+}
+
+.hovero {
+  background-image: url('hoverO.png');
 }
 
 #reset {
@@ -62,4 +127,8 @@
 
 .hidden {
   display: none;
+}
+
+.display {
+  display: flex;
 }

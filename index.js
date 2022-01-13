@@ -1,8 +1,20 @@
 HTMLGameBoard = document.getElementById('board');
-HTMLPlayerTallyName = document.getElementById('player-name');
-HTMLPlayerTallyScore = document.getElementById('player-score');
-HTMLComputerTallyScore = document.getElementById('computer-score');
+HTMLSettings = document.getElementById('player-settings');
+HTMLContent = document.getElementById('content');
+HTMLMessage = document.getElementById('message');
+HTMLPlayerOneTallyName = document.getElementById('p1name');
+HTMLPlayerOneTallyScore = document.getElementById('p1score');
+HTMLPlayerTwoTallyName = document.getElementById('p2name');
+HTMLPlayerTwoTallyScore = document.getElementById('p2score');
+HTMLStartButton = document.getElementById('start-button');
 HTMLResetButton = document.getElementById('reset');
+HTMLPlayerOneName = document.getElementById('p1name');
+HTMLPlayerOnePerson = document.getElementById('p1person');
+HTMLPlayerOneCPU = document.getElementById('p1CPU');
+HTMLPlayerTwoName = document.getElementById('p2name');
+HTMLPlayerTwoPerson = document.getElementById('p2person');
+HTMLPlayerTwoCPU = document.getElementById('p2CPU');
+
 
 const player = (name, marker, color, scoreHTML, CPU=false) => {
 
@@ -21,21 +33,13 @@ let data = {
   };
 
   const CPURound = () => {
-    let validSquares = [];
-    if (data.CPU) {
-      for (let square of game.getSquares()) {
-        if (!square.getMark()) {
-          validSquares.push(square.getId());
-          console.log(validSquares)
-      }};
+    let validSquares = game.checkEmpty();
       choice = validSquares[Math.floor(Math.random() * validSquares.length)]
-      console.log(choice);
       for (let square of game.getSquares()) {
         if (square.getId() == choice) {
           setTimeout(function () {markSquare(square)}, 1000);
           return;
-        };
-    }};
+        }};
   };
 
   const getName = () => data.name;
@@ -44,9 +48,11 @@ let data = {
 
   const getMarker = () =>  data.marker;
 
+  const isCPU = () => data.CPU;
+
   const addPoint = () => data.scoreHTML.textContent = ++data.score;
 
-  return {markSquare, CPURound, getName, getColor, getMarker, addPoint};
+  return {markSquare, CPURound, getName, getColor, getMarker, isCPU, addPoint};
 };
 
 const square = (selector) => {
@@ -61,7 +67,8 @@ const square = (selector) => {
   const clearMarkers = () => {
     html.classList.remove('xmarker');
     html.classList.remove('omarker');
-    html.classList.remove('hover');
+    html.classList.remove('hoverx');
+    html.classList.remove('hovero');
   };
 
   const mark = (m) => {
@@ -92,24 +99,25 @@ const game = (() => {
 
   const setSquareHover = (id) => {
     squares[id].html.addEventListener('mouseover', (e) => {
-      if (!squares[id].html.classList.contains('xmarker') &&
-      !squares[id].html.classList.contains('omarker') &&
-      game.getTurn() == 0) {
-        squares[id].html.classList.add('hover');
+      if (turn!==null &&
+      !squares[id].getMark() &&
+      !players[turn].isCPU()) {
+        squares[id].html.classList.add(`hover${players[turn].getMarker()}`);
       }});
   };
 
   const setSquareMouseOut = (id) => {
     squares[id].html.addEventListener('mouseout', (e) => {
-      squares[id].html.classList.remove('hover');
+      if (turn!==null) squares[id].html.classList.remove(`hover${players[turn].getMarker()}`);
     });
   };
 
   const setSquareClick = (id) => {
     squares[id].html.addEventListener('click', (e) => {
-      if (game.getTurn() == 0 &&
+      if (turn!==null &&
+      !players[turn].isCPU() &&
       squares[id].getMark() == '') {
-          you.markSquare(squares[id]);
+          players[turn].markSquare(squares[id]);
     }});
   };
 
@@ -123,6 +131,8 @@ const game = (() => {
     squares = [];
   };
 
+  const getPlayers = () => players;
+
   const getTurn = () => turn;
   const setTurn = (num) => turn = parseInt(num);
   const endTurn = () => {
@@ -135,10 +145,11 @@ const game = (() => {
           break;
         case 0:
           turn = 1;
-          computer.CPURound();
+          if (p2.isCPU()) p2.CPURound();
           break;
         case 1:
           turn = 0;
+          if (p1.isCPU()) p1.CPURound();
           break;
       };
     };
@@ -174,13 +185,19 @@ const game = (() => {
     };
   };
 
-  const win = (name, paintData) => {
-    paintSquares(paintData);
-    endGame();
-  }
+  const win = (name, data) => {
+    if (data == 'tie') {
+      endGame('tie');
+      HTMLMessage.textContent = 'It\'s a tie!';
+    } else {
+      paintSquares(data);
+      HTMLMessage.textContent = `Player ${turn+1} wins!`;
+      endGame();
+    };
+  };
 
-  const endGame = () => {
-    players[turn].addPoint();
+  const endGame = (tie=false) => {
+    if (!tie) players[turn].addPoint();
     turn = null;
   };
 
@@ -207,34 +224,45 @@ const game = (() => {
       if (m) {
         if (squares[4].getMark() == m &&
           squares[8].getMark() == m) return [0, 'back'];
-      }
+      };
 
       m = squares[2].getMark();
       if (m) {
         if (squares[4].getMark() == m &&
             squares[6].getMark() == m) return [0, 'forward'];
-      }
+      };
   };
+
+  const checkEmpty = () => {
+  let validSquares = [];
+    for (let square of squares) {
+      if (!square.getMark()) {
+        validSquares.push(square.getId());
+        console.log(validSquares)
+    }};
+  return validSquares;
+}
   
   const checkSquares = () => {
     winCheck = checkColumns();
     if (!winCheck) winCheck = checkRows();
     if (!winCheck) winCheck = checkDiagonals();
+    if (!winCheck && checkEmpty().length == 0) winCheck = 'tie';
     return winCheck;
   };
  
-  const initPlayers = () => {
-    you = Object.assign({}, 
-        player('you', 'x', 'green', HTMLPlayerTallyScore));
+  const initPlayers = (p1type, p1name, p2type, p2name) => {
+    p1 = Object.assign({}, 
+        player(p1name, 'x', 'green', HTMLPlayerOneTallyScore, p1type));
 
-    computer = Object.assign({},
-        player('computer', 'o', 'red', HTMLComputerTallyScore, true));
+    p2 = Object.assign({},
+        player(p2name, 'o', 'red', HTMLPlayerTwoTallyScore, p2type));
 
-    players.push(you, computer);
+    players.push(p1, p2);
   };  
   
-  return {squares, getSquares, addSquare, setSquareListeners, getTurn, setTurn,
-     endTurn, initPlayers, clearSquares};
+  return {squares, getSquares, addSquare, setSquareListeners, getPlayers,
+     getTurn, setTurn, endTurn, checkEmpty, initPlayers, clearSquares};
 })();
 
 const board = (() => {
@@ -258,11 +286,7 @@ const board = (() => {
     for (let i=0;i<game.getSquares().length;i++) {
       game.setSquareListeners(i);
     };
-
-    HTMLResetButton.addEventListener('click', (e) => {
-      restart()
-    });
-    };
+  };
 
   const init = () => {
     create();
@@ -280,11 +304,56 @@ const board = (() => {
     remove();
     init();
     game.setTurn(0);
+    HTMLMessage.textContent = 'Tic Tac Toe';
+    if (game.getPlayers()[0].isCPU()) p1.CPURound();
   };
 
-  const startgame = (() => {
-    restart();
-    game.initPlayers()
+  const start = (() => {
+    p1type = '';
+    p1name = 'You';
+    p2type = 'CPU';
+    p2name = 'CPU';
+
+    HTMLResetButton.addEventListener('click', (e) => {
+      restart();
+    });
+
+    HTMLPlayerOnePerson.addEventListener('input', (e) => {
+      HTMLPlayerOneName.disabled = false;
+      HTMLPlayerOneName.value = '';
+      p1type = '';
+    })
+
+    HTMLPlayerOneCPU.addEventListener('input', (e) => {
+      HTMLPlayerOneName.disabled = true;
+      HTMLPlayerOneName.value = 'CPU';
+      p1type = 'CPU';
+    })
+
+    HTMLPlayerTwoPerson.addEventListener('input', (e) => {
+      HTMLPlayerTwoName.disabled = false;
+      HTMLPlayerTwoName.value = '';
+      p2type = '';
+    })
+
+    HTMLPlayerTwoCPU.addEventListener('input', (e) => {
+      HTMLPlayerTwoName.disabled = true;
+      HTMLPlayerTwoName.value = 'CPU';
+      p2type = 'CPU';
+    })
+
+    HTMLStartButton.addEventListener('click', (e) => {
+      HTMLSettings.classList.remove('display');
+      HTMLSettings.classList.add('hidden');
+      HTMLContent.classList.remove('hidden');
+      HTMLContent.classList.add('display');
+      HTMLPlayerOneTallyName.textContent = HTMLPlayerOneName.value;
+      HTMLPlayerTwoTallyName.textContent = HTMLPlayerTwoName.value;
+      game.initPlayers(p1type, HTMLPlayerOneName.value, p2type, HTMLPlayerTwoName.value)
+      restart();
+    })
+
+
   })();
 
   return {restart};
