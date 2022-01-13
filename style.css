@@ -58,12 +58,13 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  font-size: 4vh;
 }
 
 #start-button {
-  width: 10vw;
+  min-width: 15%;
   height: 5vh;
-  font-size: 24px;
+  font-size: 3vh;
 }
 
 
