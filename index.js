@@ -3,8 +3,10 @@ const HTMLSettings = document.getElementById('player-settings');
 const HTMLContent = document.getElementById('content');
 const HTMLMessage = document.getElementById('message');
 const HTMLPlayerOneTallyName = document.getElementById('p1name');
+const HTMLPlayerOneCPUDifficulty = document.getElementById('p1CPUdifficulty')
 const HTMLPlayerOneTallyScore = document.getElementById('p1score');
 const HTMLPlayerTwoTallyName = document.getElementById('p2name');
+const HTMLPlayerTwoCPUDifficulty = document.getElementById('p2CPUdifficulty')
 const HTMLPlayerTwoTallyScore = document.getElementById('p2score');
 const HTMLStartButton = document.getElementById('start-button');
 const HTMLResetButton = document.getElementById('reset');
@@ -18,69 +20,105 @@ const HTMLPlayerTwoCPU = document.getElementById('p2CPU');
 
 const player = (name, marker, color, scoreHTML, CPU=false, id, CPUDifficulty) => {
 
-let data = {
-    name,
-    marker, //'x' or 'o'
-    color,
-    score: 0,
-    scoreHTML,
-    CPU,
-    id,
-    CPUDifficulty
+  let data = {
+      name,
+      marker, //'x' or 'o'
+      color,  //for PaintSquares() when winning a game
+      score: 0,
+      scoreHTML,
+      CPU,
+      id, //0 or 1, same as turn
+      CPUDifficulty
   };
 
+  let minMaxFloor;
+    
   const markSquare = (target) => {
     target.setMark(data.marker);
-    target.updateDisplay()
+    target.updateDisplay();
+    console.log(`${data.name} marked square #${target.getId()}.`)
     game.endTurn(data.id);
   };
 
-  const CPURound = () => {
-    if (CPUDifficulty) {
-      setTimeout(function () {markSquare(game.getSquares()[makeBestMove()])}, 1000);
-    }
-    else {
-      let validSquares = game.getAvailableMoves(game.getSquares());
-        choice = validSquares[Math.floor(Math.random() * validSquares.length)]
-        setTimeout(function () {markSquare(choice)}, 1000);
-        return;
+  //sets the minimum roll for a minMaxed move, based on chosen difficulty
+  const setMinMaxFloor = () => {
+    switch(data.CPUDifficulty) {
+      case 'Easy':
+        minMaxFloor = 1;
+        break;
+      case 'Hard':
+        minMaxFloor = 0.33;
+        break;
+      case 'Impossible':
+        minMaxFloor = 0;
+        break;
+      default:  //will be picked by 'Normal' as well
+        minMaxFloor = 0.66;
+        break;
     };
   };
 
-  const makeBestMove = () => {
+  const rollForMinMax = () => {
+    if (!minMaxFloor) setMinMaxFloor();
+    let roll = Math.random();
+    return (roll >= minMaxFloor) ? true : false;
+  }
+
+  
+  //rolls to see if it should minMax or pick a random square
+  const CPURound = () => {
+    if (rollForMinMax() == true) {  
+      console.log(`Minimax roll succesful, calculating possible outcomes...`);
+      let choice = getBestChoice();
+      setTimeout(function () { markSquare(choice)}, 1000);
+    }
+    else {
+      console.log(`Minimax roll failed, picking random square...`);
+      let validSquares = game.getAvailableMoves(game.getSquares());
+      let choice = validSquares[Math.floor(Math.random() * validSquares.length)]
+      setTimeout(function () {markSquare(choice)}, 1000);
+      return;
+    };
+  };
+
+  //scores available moves using minMax() then returns the highest scoring one
+  const getBestChoice = () => {
     let bestMove;
-    let score = -10;
+    let score = -999;
     let marker = data.marker;
-    let currentBoard = board.makeBoard('copy', game.getSquares())
+    let currentBoard = game.getSquares();
 
     for (let move of game.getAvailableMoves(currentBoard)) {
       move.setMark(marker);
-      moveScore = minMax(currentBoard, marker, true);
+      moveScore = minMax(currentBoard, marker, true, 0);
       move.clearMark();
       if (moveScore > score) {
         score = moveScore;
         bestMove = move;
       };
     };
-    return bestMove.getId()-1;
+    return bestMove;
   };
 
-  const minMax = (gameBoard, marker, playing) => {
-    winData = game.isGameOver(gameBoard, marker);
+  //minMax algorithm, scores the board if in an end state
+  //recursively calls itself on all possible moves otherwise,
+  //then returns the highest possible score it finds
+  const minMax = (gameBoard, marker, playing, depth) => {
+    let winData = game.isGameOver(gameBoard, marker);
     if (winData && winData[0] == 'win') {
-      if (playing) return 1
-      else return -1;
+      if (playing) return (10 - depth);
+      else return (-10 - depth);
     }
-    else if (winData && winData[0] == 'tie') return 0;
+    else if (winData && winData[0] == 'tie') return (0 - depth);
 
     playing = !playing;
-    let best = (playing) ? -10 : 10;
+    let best = (playing) ? -100 : 100;
 
     for (let move of game.getAvailableMoves(gameBoard)) {
       let nextMarker = (marker == 'x') ? 'o' : 'x';
 
       move.setMark(nextMarker);
-      let value = minMax(gameBoard, nextMarker, playing);
+      let value = minMax(gameBoard, nextMarker, playing, depth+1);
       move.clearMark();
 
       if (playing) best = Math.max(best, value);
@@ -125,9 +163,9 @@ const square = () => {
     if (!marker) marker = m;
   };
 
-  const clearMark = () => marker = '';
-
   const getMark = () => marker;
+
+  const clearMark = () => marker = '';
 
   const updateDisplay = () => {
     clearClassList()
@@ -161,26 +199,27 @@ const game = (() => {
   const getPlayers = () => players;
   const getPlaying = () => players[turn];
 
-
   const getTurn = () => turn;
   const setTurn = (num) => turn = parseInt(num);
   const endTurn = (turnPlayerId) => {
-    //checking if game's won
-    if (winData = isGameOver(squares, turnPlayerId)) {
+
+    winData = isGameOver(squares, turnPlayerId);
+    if (winData) {
       setTimeout(function() {win(winData)}, 500);
     }
 
     else {
-      switch(turn) {
-        case null:
-          break;
-        case 0:
+      switch(turn) {case 0:
           turn = 1;
+          console.log(`${players[turn].getName()}'s turn.`)
           if (p2.isCPU()) p2.CPURound();
           break;
         case 1:
           turn = 0;
+          console.log(`${players[turn].getName()}'s turn.`)
           if (p1.isCPU()) p1.CPURound();
+          break;
+        default:
           break;
       };
     };
@@ -216,13 +255,18 @@ const game = (() => {
     };
   };
 
+  //'data' is passed by endTurn(), containing info about the winner
   const win = (data) => {
     if (data[0] == 'tie') {
       endGame('tie');
-      HTMLMessage.textContent = 'It\'s a tie!';
+      message = 'It\'s a tie!';
+      HTMLMessage.textContent = message;
+      console.log(message);
     } else {
       paintSquares(data);
-      HTMLMessage.textContent = `${players[turn].getName()} wins!`;
+      message = `${players[turn].getName()} wins!`
+      HTMLMessage.textContent = message;
+      console.log(message);
       endGame();
     };
   };
@@ -285,9 +329,9 @@ const game = (() => {
     return winData;
   };
  
-  const initPlayers = (p1type, p1name, p2type, p2name) => {
-    p1 = player(p1name, 'x', 'green', HTMLPlayerOneTallyScore, p1type, 0);
-    p2 = player(p2name, 'o', 'red', HTMLPlayerTwoTallyScore, p2type, 1, 'hard');
+  const initPlayers = (p1type, p1name, p1diff, p2type, p2name, p2diff) => {
+    p1 = player(p1name, 'x', 'green', HTMLPlayerOneTallyScore, p1type, 0, p1diff);
+    p2 = player(p2name, 'o', 'red', HTMLPlayerTwoTallyScore, p2type, 1, p2diff);
 
     players.push(p1, p2);
   };  
@@ -299,6 +343,15 @@ const game = (() => {
 
 const board = (() => {
   let html = HTMLGameBoard;
+
+  let p1type = '';
+  let p2type = 'CPU';
+
+  let p1name;
+  let p2name;
+
+  let p1difficulty;
+  let p2difficulty;
 
   const createHTML = (board) => {
     for(let i=1;i<=9;i++) {
@@ -408,40 +461,45 @@ const board = (() => {
   };
 
   const start = (() => {
-    let p1type = '';
-    let p2type = 'CPU';
 
     HTMLResetButton.addEventListener('click', (e) => {
       restart();
     });
 
     HTMLPlayerOnePerson.addEventListener('input', (e) => {
-      HTMLPlayerOneName.disabled = false;
+      HTMLPlayerOneCPUDifficulty.classList.add('hidden');
+      HTMLPlayerOneName.classList.remove('hidden');
       HTMLPlayerOneName.value = '';
       p1type = '';
     })
 
     HTMLPlayerOneCPU.addEventListener('input', (e) => {
-      HTMLPlayerOneName.disabled = true;
+      HTMLPlayerOneName.classList.add('hidden');
+      HTMLPlayerOneCPUDifficulty.classList.remove('hidden');
       HTMLPlayerOneName.value = 'CPU';
       p1type = 'CPU';
     })
 
     HTMLPlayerTwoPerson.addEventListener('input', (e) => {
-      HTMLPlayerTwoName.disabled = false;
+      HTMLPlayerTwoCPUDifficulty.classList.add('hidden');
+      HTMLPlayerTwoName.classList.remove('hidden');
       HTMLPlayerTwoName.value = '';
       p2type = '';
     })
 
     HTMLPlayerTwoCPU.addEventListener('input', (e) => {
-      HTMLPlayerTwoName.disabled = true;
+      HTMLPlayerTwoName.classList.add('hidden');
+      HTMLPlayerTwoCPUDifficulty.classList.remove('hidden');
       HTMLPlayerTwoName.value = 'CPU';
       p2type = 'CPU';
     })
 
     HTMLStartButton.addEventListener('click', (e) => {
-      let p1name = HTMLPlayerOneName.value;
-      let p2name = HTMLPlayerTwoName.value;
+      p1name = HTMLPlayerOneName.value;
+      p2name = HTMLPlayerTwoName.value;
+
+      p1difficulty = HTMLPlayerOneCPUDifficulty.value;
+      p2difficulty = HTMLPlayerTwoCPUDifficulty.value;
   
       HTMLSettings.classList.remove('display');
       HTMLSettings.classList.add('hidden');
@@ -458,8 +516,9 @@ const board = (() => {
       if (p2name === '') p2name = 'Player 2';
       HTMLPlayerOneTallyName.textContent = p1name;
       HTMLPlayerTwoTallyName.textContent = p2name;
-      game.initPlayers(p1type, p1name, p2type, p2name)
+      game.initPlayers(p1type, p1name, p1difficulty, p2type, p2name, p2difficulty);
       restart();
+      
     })
 
 

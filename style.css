@@ -45,7 +45,6 @@
   font-weight: bold;
   text-align: center;
   align-self: center;
-  font-size: 18px;
 }
 
 .player-type {
@@ -60,6 +59,20 @@
   align-items: center;
   font-size: 4vh;
 }
+
+.CPU-difficulty {
+  width: 16vw;
+  height: 5vh;
+  align-self: center;
+  text-align: center;
+  font-weight: bold;
+}
+
+.CPU-difficulty,
+.player-name {
+  font-size: 1.25vw;
+}
+
 
 #start-button {
   min-width: 15%;

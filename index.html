@@ -17,6 +17,12 @@
           <img class='marker'src='X.png'>
         </div>
         <input class='player-name' placeholder="name" id='p1namepick' maxlength=15>
+        <select class='CPU-difficulty hidden' id='p1CPUdifficulty'>
+          <option value="Easy">Easy</option>
+          <option value="Normal" selected>Normal</option>
+          <option value="Hard">Hard</option>
+          <option value="Impossible">Impossible</option>
+          </select>
         <div class='player-type'>
           <div class='choice'>
             <input type='radio' name='type1' value='Person' id='p1person' checked>Person
@@ -32,7 +38,13 @@
         <div>
           <img class='marker'src='O.png'>
         </div>
-        <input class='player-name' placeholder="name" id='p2namepick' value='CPU' maxlength=15 disabled>
+        <input class='player-name hidden' placeholder="name" id='p2namepick' value='CPU' maxlength=15>
+        <select class='CPU-difficulty' id='p2CPUdifficulty' >
+          <option value="Easy">Easy</option>
+          <option value="Normal" selected>Normal</option>
+          <option value="Hard">Hard</option>
+          <option value="Impossible">Impossible</option>
+        </select>
         <div class='player-type'>
           <div class='choice'>
             <input type='radio' name='type2' value='Person' id='p2person'>Person
