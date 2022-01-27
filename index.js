@@ -16,7 +16,7 @@ const HTMLPlayerTwoPerson = document.getElementById('p2person');
 const HTMLPlayerTwoCPU = document.getElementById('p2CPU');
 
 
-const player = (name, marker, color, scoreHTML, CPU=false) => {
+const player = (name, marker, color, scoreHTML, CPU=false, id, CPUDifficulty) => {
 
 let data = {
     name,
@@ -25,22 +25,70 @@ let data = {
     score: 0,
     scoreHTML,
     CPU,
+    id,
+    CPUDifficulty
   };
 
   const markSquare = (target) => {
-    target.mark(data.marker);
-    game.endTurn(data.name);
+    target.setMark(data.marker);
+    target.updateDisplay()
+    game.endTurn(data.id);
   };
 
   const CPURound = () => {
-    let validSquares = game.checkEmpty();
-      choice = validSquares[Math.floor(Math.random() * validSquares.length)]
-      for (let square of game.getSquares()) {
-        if (square.getId() == choice) {
-          setTimeout(function () {markSquare(square)}, 1000);
-          return;
-        }};
+    if (CPUDifficulty) {
+      setTimeout(function () {markSquare(game.getSquares()[makeBestMove()])}, 1000);
+    }
+    else {
+      let validSquares = game.getAvailableMoves(game.getSquares());
+        choice = validSquares[Math.floor(Math.random() * validSquares.length)]
+        setTimeout(function () {markSquare(choice)}, 1000);
+        return;
+    };
   };
+
+  const makeBestMove = () => {
+    let bestMove;
+    let score = -10;
+    let marker = data.marker;
+    let currentBoard = board.makeBoard('copy', game.getSquares())
+
+    for (let move of game.getAvailableMoves(currentBoard)) {
+      move.setMark(marker);
+      moveScore = minMax(currentBoard, marker, true);
+      move.clearMark();
+      if (moveScore > score) {
+        score = moveScore;
+        bestMove = move;
+      };
+    };
+    return bestMove.getId()-1;
+  };
+
+  const minMax = (gameBoard, marker, playing) => {
+    winData = game.isGameOver(gameBoard, marker);
+    if (winData && winData[0] == 'win') {
+      if (playing) return 1
+      else return -1;
+    }
+    else if (winData && winData[0] == 'tie') return 0;
+
+    playing = !playing;
+    let best = (playing) ? -10 : 10;
+
+    for (let move of game.getAvailableMoves(gameBoard)) {
+      let nextMarker = (marker == 'x') ? 'o' : 'x';
+
+      move.setMark(nextMarker);
+      let value = minMax(gameBoard, nextMarker, playing);
+      move.clearMark();
+
+      if (playing) best = Math.max(best, value);
+      else best = Math.min(best, value);
+    };
+    return best;
+  };
+
 
   const getName = () => data.name;
 
@@ -52,40 +100,41 @@ let data = {
 
   const addPoint = () => data.scoreHTML.textContent = ++data.score;
 
-  return {markSquare, CPURound, getName, getColor, getMarker, isCPU, addPoint};
+  return {markSquare, CPURound, minMax, getName, getColor, getMarker, isCPU, addPoint};
 };
 
-const square = (selector) => {
-  const html = document.querySelector(selector);
-
-  const xPos = Math.floor(Number((html.dataset.id-1)%3));
-  const yPos = Math.floor(Number((html.dataset.id-1)/3));
-
+const square = () => {
   let marker = '';
-  let id = html.dataset.id;
+  let html;
+  let id;
 
-  const clearMarkers = () => {
+  const setHTML = (HTML) => html = HTML;
+  const getHTML = () => html;
+
+  const setId = (Id) => id = Id;
+  const getId = () => id;
+
+  const clearClassList = () => {
     html.classList.remove('xmarker');
     html.classList.remove('omarker');
     html.classList.remove('hoverx');
     html.classList.remove('hovero');
   };
 
-  const mark = (m) => {
-    if (!marker){
-      clearMarkers()
-      marker = m;
-      html.classList.add(`${marker}marker`);
-    }
+  const setMark = (m) => {
+    if (!marker) marker = m;
   };
+
+  const clearMark = () => marker = '';
 
   const getMark = () => marker;
 
-  const getId = () => Number(id);
+  const updateDisplay = () => {
+    clearClassList()
+    html.classList.add(`${marker}marker`);
+  }
 
-  const getPosition = () => [xPos, yPos];
-
-  return {html, mark, getMark, getId, getPosition};
+  return {html, setHTML, getHTML, setId, getId, setMark, getMark, clearMark, updateDisplay};
 };
 
 const game = (() => {
@@ -93,55 +142,34 @@ const game = (() => {
   let players = [];
   let turn = 0;
 
+  const setBoard = (board) => squares = board;
+  const getState = (board=squares) => {
+    return board.map((sqr) => sqr.getMark());
+  };
+
   const getSquares = () => squares;
-  const addSquare = (arg) => squares.push(arg);
+  const addSquare = (arg, temp) => squares.push(arg);
   const paintSquare = (id, color) => {
-    squares[id].html.style.backgroundColor = color;
-    squares[id].html.style.boxShadow = `0px 0px 50px ${color}`;
+    squares[id].getHTML().style.backgroundColor = color;
+    squares[id].getHTML().style.boxShadow = `0px 0px 50px ${color}`;
   };
-
-  const setSquareHover = (id) => {
-    squares[id].html.addEventListener('mouseover', (e) => {
-      if (turn!==null &&
-      !squares[id].getMark() &&
-      !players[turn].isCPU()) {
-        squares[id].html.classList.add(`hover${players[turn].getMarker()}`);
-      }});
-  };
-
-  const setSquareMouseOut = (id) => {
-    squares[id].html.addEventListener('mouseout', (e) => {
-      if (turn!==null) squares[id].html.classList.remove(`hover${players[turn].getMarker()}`);
-    });
-  };
-
-  const setSquareClick = (id) => {
-    squares[id].html.addEventListener('click', (e) => {
-      if (turn!==null &&
-      !players[turn].isCPU() &&
-      squares[id].getMark() == '') {
-          players[turn].markSquare(squares[id]);
-    }});
-  };
-
-  const setSquareListeners = (id) => {
-    setSquareHover(id);
-    setSquareMouseOut(id);
-    setSquareClick(id);
-  }
 
   const clearSquares = () => {
     squares = [];
   };
 
   const getPlayers = () => players;
+  const getPlaying = () => players[turn];
+
 
   const getTurn = () => turn;
   const setTurn = (num) => turn = parseInt(num);
-  const endTurn = () => {
-    if (r = checkSquares()) {
-      setTimeout(function() {win(players[turn].getName(), r)}, 500);
+  const endTurn = (turnPlayerId) => {
+    //checking if game's won
+    if (winData = isGameOver(squares, turnPlayerId)) {
+      setTimeout(function() {win(winData)}, 500);
     }
+
     else {
       switch(turn) {
         case null:
@@ -160,16 +188,16 @@ const game = (() => {
 
   const paintSquares = (data) => {
     color = players[turn].getColor()
-    switch(data[1]) {
+    switch(data[3]) {
     case 'column':
-      for(let i = data[0];i<9;i+=3) {
+      for(let i = data[2];i<9;i+=3) {
         paintSquare(i, color);
       };
       break;
 
     case 'row':
-      let j = data[0]+3;
-      for(let i = data[0];i<j;i++) {
+      let j = data[2]+3;
+      for(let i = data[2];i<j;i++) {
         paintSquare(i, color);
       };
       break;
@@ -188,8 +216,8 @@ const game = (() => {
     };
   };
 
-  const win = (name, data) => {
-    if (data == 'tie') {
+  const win = (data) => {
+    if (data[0] == 'tie') {
       endGame('tie');
       HTMLMessage.textContent = 'It\'s a tie!';
     } else {
@@ -204,76 +232,76 @@ const game = (() => {
     turn = null;
   };
 
-  const checkColumns = () => {
+  const checkColumns = (board, id) => {
     for(let i=0;i<3;i++) {
-      let m = squares[i].getMark();
+      let m = board[i].getMark();
       if (!m) continue;
-      if (squares[i+3].getMark() == m && 
-          squares[i+6].getMark() == m) return [i, 'column'];
+      if (board[i+3].getMark() == m && 
+          board[i+6].getMark() == m) return ['win', game.getPlayers()[id].getName(), i, 'column'];
     };
   };
 
-  const checkRows = () => {
+  const checkRows = (board, id) => {
     for(let i=0;i<7;i+=3) {
-      let m = squares[i].getMark();
+      let m = board[i].getMark();
       if (!m) continue;
-      if (squares[i+1].getMark() == m &&
-          squares[i+2].getMark() == m) return [i, 'row'];
+      if (board[i+1].getMark() == m &&
+      board[i+2].getMark() == m) return ['win', game.getPlayers()[id].getName(), i, 'row'];
     };
   };
 
-  const checkDiagonals = () => {
-      let m = squares[0].getMark();
+  const checkDiagonals = (board, id) => {
+      let m = board[0].getMark();
       if (m) {
-        if (squares[4].getMark() == m &&
-          squares[8].getMark() == m) return [0, 'back'];
+        if (board[4].getMark() == m &&
+        board[8].getMark() == m) return ['win', game.getPlayers()[id].getName(), 2, 'back'];
       };
 
-      m = squares[2].getMark();
+      m = board[2].getMark();
       if (m) {
-        if (squares[4].getMark() == m &&
-            squares[6].getMark() == m) return [0, 'forward'];
+        if (board[4].getMark() == m &&
+        board[6].getMark() == m) return ['win', game.getPlayers()[id].getName(), 6, 'forward'];
       };
   };
 
-  const checkEmpty = (any) => {
+  const getAvailableMoves = (board, any) => {
   let validSquares = [];
-    for (let square of squares) {
+    for (let square of board) {
       if (!square.getMark()) {
-        validSquares.push(square.getId());
+        validSquares.push(square);
         if (any) break;
-        console.log(validSquares)
     }};
-  return validSquares;
+  return (validSquares[0]) ? validSquares : false;
 }
   
-  const checkSquares = () => {
-    winCheck = checkColumns();
-    if (!winCheck) winCheck = checkRows();
-    if (!winCheck) winCheck = checkDiagonals();
-    if (!winCheck && checkEmpty('any').length == 0) winCheck = 'tie';
-    return winCheck;
+
+  const isGameOver = (board, id) => {
+    if (id == 'x') id = 0;
+    else if (id == 'o') id = 1;
+    winData = checkColumns(board, id);
+    if (!winData) winData = checkRows(board, id);
+    if (!winData) winData = checkDiagonals(board, id);
+    if (!winData && !getAvailableMoves(board, 'any')) winData = ['tie'];
+    return winData;
   };
  
   const initPlayers = (p1type, p1name, p2type, p2name) => {
-    p1 = Object.assign({}, 
-        player(p1name, 'x', 'green', HTMLPlayerOneTallyScore, p1type));
-
-    p2 = Object.assign({},
-        player(p2name, 'o', 'red', HTMLPlayerTwoTallyScore, p2type));
+    p1 = player(p1name, 'x', 'green', HTMLPlayerOneTallyScore, p1type, 0);
+    p2 = player(p2name, 'o', 'red', HTMLPlayerTwoTallyScore, p2type, 1, 'hard');
 
     players.push(p1, p2);
   };  
   
-  return {squares, getSquares, addSquare, setSquareListeners, getPlayers,
-     getTurn, setTurn, endTurn, checkEmpty, initPlayers, clearSquares};
+  return {setBoard, getSquares, getState, addSquare, getPlayers, 
+    getPlaying, getTurn, setTurn, endTurn, getAvailableMoves,
+    isGameOver, initPlayers, clearSquares};
 })();
 
 const board = (() => {
   let html = HTMLGameBoard;
 
-  const create = (size=9) => {
-    for(let i=1;i<=size;i++) {
+  const createHTML = (board) => {
+    for(let i=1;i<=9;i++) {
       gameObject = document.createElement('div');
       gameObject.classList.add('gameobject');
       gameObject.dataset.id = i;
@@ -306,26 +334,63 @@ const board = (() => {
           gameObject.classList.add('noB');
           gameObject.classList.add('noR');
           break;
-      }
+      };
       html.appendChild(gameObject);
-    };
+      board[i-1].setHTML(gameObject);
+      board[i-1].setId(i);
+      setSquareListeners(board[i-1], board[i-1].getHTML());
   };
+  game.setBoard(board);
+};
 
-  const initHTML = () => {
-    HTMLGameObjects = document.querySelectorAll('.gameobject');
-    HTMLGameObjects.forEach((obj) => {
-      game.addSquare(square(`[data-id='${obj.dataset.id}']`));
-    });
-
-    for (let i=0;i<game.getSquares().length;i++) {
-      game.setSquareListeners(i);
+  const makeBoard = (copy=false, copyOf=game.getSquares()) => {
+    let newBoard = [];
+    for (let i = 1;i<=9;i++) {
+      newBoard.push(square())
     };
+    if (copy) {
+      for (let i = 0;i<copyOf.length;i++) {
+        newBoard[i].setMark(copyOf[i].getMark());
+        newBoard[i].setId(copyOf[i].getId());
+      };
+    };
+    return newBoard;
   };
 
   const init = () => {
-    create();
-    initHTML();
+    createHTML(makeBoard());
   };
+
+  const setSquareHover = (square, HTML) => {
+    HTML.addEventListener('mouseover', (e) => {
+      if (game.getTurn()!==null &&
+      !square.getMark() &&
+      !game.getPlaying().isCPU()) {
+        HTML.classList.add(`hover${game.getPlaying().getMarker()}`);
+      }});
+  };
+
+  const setSquareMouseOut = (HTML) => {
+    HTML.addEventListener('mouseout', (e) => {
+      if (game.getTurn()!==null) {
+        HTML.classList.remove(`hover${game.getPlaying().getMarker()}`);
+    }});
+  };
+
+  const setSquareClick = (square, HTML) => {
+    HTML.addEventListener('click', (e) => {
+      if (game.getTurn()!==null &&
+      !game.getPlaying().isCPU() &&
+      square.getMark() == '') {
+        game.getPlaying().markSquare(square);
+    }});
+  };
+
+  const setSquareListeners = (square, HTML) => {
+    setSquareHover(square, HTML);
+    setSquareMouseOut(HTML);
+    setSquareClick(square, HTML);
+  }
 
   const remove = () => {
     while(html.hasChildNodes()) {
@@ -400,5 +465,5 @@ const board = (() => {
 
   })();
 
-  return {restart};
+  return {restart, makeBoard};
 })();
