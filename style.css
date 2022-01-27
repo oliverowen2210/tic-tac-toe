@@ -90,7 +90,8 @@
 
 #message {
   font-size: 5vh;
-
+}
+  
 #game-wrapper {
   display: flex;
   align-items: center;
