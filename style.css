@@ -88,6 +88,9 @@
   max-height: 100vh;
 }
 
+#message {
+  font-size: 5vh;
+
 #game-wrapper {
   display: flex;
   align-items: center;
@@ -105,7 +108,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  font-size: 36px;
+  font-size: 4vh;
   font-weight: bold;
   width: 15vw;
 }
@@ -149,7 +152,7 @@
   margin-top: 48px;
   width: 35vw;
   height: 8vh;
-  font-size: 32px;
+  font-size: 5vh;
   background-color: darkgray;
 }
 
